@@ -1,0 +1,39 @@
+# .agent-loop.yml — per-repo config for the agent-loop autopilot.
+version: 1
+
+branch_base: main
+max_rounds: 4
+
+# Merge on reviewer PASS + green required CI. The founder gate is at the ISSUE:
+# only the founder applies agent:go (decision 2026-07-19).
+# NOTE: auto-merge is refused unless branch protection has a required status
+# check AND allow_auto_merge is true at the repo level. Both are set here.
+auto_merge: true
+merge_method: squash
+
+commands:
+  install: "pip install -e \".[dev]\""
+  test:    "python -m pytest -q"
+  lint:    "ruff check . && ruff format --check . && mypy aos"
+
+hard_stops:
+  dependency_files:
+    - pyproject.toml
+  paths:
+    # The kernel's whole purpose is the gate. A change here is never routine.
+    - "aos/grants*"          # who may do what
+    - "aos/engine.py"        # the single door: grant check -> driver -> record
+    - "grants/**"            # the authorisation records themselves
+    - "lab.yaml"             # topology: which real resources are reachable
+    - "**/.env*"
+  flag_on_file_delete: true
+  # Pre-1.0, no external users: in-rubric public-API edits are allowed and the
+  # reviewer verifies a CHANGELOG.md note instead of flagging.
+  flag_on_public_api_change: false
+
+review:
+  standards_sources:
+    - CLAUDE.md              # verified facts, traps, ground rules
+    - spec/v0.2.md           # the contract
+    - README.md
+  spec_source: issue
