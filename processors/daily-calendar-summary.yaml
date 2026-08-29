@@ -1,0 +1,23 @@
+# Processor manifest (spec §4.4). One capability set, one trigger, one policy.
+processor: daily-calendar-summary
+version: 0.2
+
+requires:
+  - cal_personal.read_events
+
+blueprint: blueprints/daily-summary.yaml
+engine: bricks
+
+# The topology this processor reads through. lab.sim.yaml needs no network and
+# no credentials; lab.yaml is the real calendar.
+lab: lab.sim.yaml
+
+trigger:
+  cron: "0 7 * * *"
+
+policy:
+  grants_required: true
+
+output:
+  deliver: push
+  target: "user:me"

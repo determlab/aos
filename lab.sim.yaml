@@ -1,0 +1,17 @@
+# Topology (spec §4.2) — offline twin. No network, no credentials.
+#
+# `shal,sim-msg` provides MessageTransport to its children exactly as
+# `shal,http` does, so the calendar node below binds the SAME driver the real
+# lab.yaml uses. The sim model ships beside the driver in
+# aos/drivers/google_calendar.py.
+shal_version: 1
+root:
+  services:
+    driver: shal,sim-msg
+    address: sim
+    children:
+      cal:
+        id: cal_personal
+        driver: determlab,google-calendar
+        address: calendars/primary
+        description: "Personal calendar (simulated)"

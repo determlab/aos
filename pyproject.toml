@@ -1,0 +1,39 @@
+[project]
+name = "aos"
+version = "0.2.0"
+description = "AOS — a tiny kernel that runs agent processors: manifests, grants, run records."
+requires-python = ">=3.10"
+authors = [{ name = "determlab", email = "hemipaska@gmail.com" }]
+readme = "README.md"
+
+dependencies = [
+    "pyshal>=0.2.1",
+    "pyyaml>=6.0",
+    # bricks is alpha and not on PyPI — install it from a PINNED commit
+    # alongside this package (spec §8 step 5):
+    #   pip install -e ../bricks
+    # pluggy is imported at module level by bricks.core.hooks but is not one of
+    # its declared runtime dependencies, so it has to be asked for by name.
+    "pluggy>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+aos = "aos.cli:main"
+
+# How the calendar driver reaches SHAL. The framework never imports a module
+# named by a config string — a driver runs because it was installed on purpose.
+[project.entry-points."shal.drivers"]
+"determlab,google-calendar" = "aos.drivers.google_calendar:GoogleCalendar"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["aos*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,25 @@
+# Topology (spec §4.2) — the real calendar.
+#
+# NOT YET USABLE. `shal,http` only POSTs the whole message as a JSON body, and
+# the Google Calendar events endpoint is a GET that needs an Authorization
+# header. Making this work needs a request envelope (method/path/query/headers)
+# in shal's http bus — a change in the shal repo, which is out of this repo's
+# scope. The driver already emits that envelope, so lab.yaml starts working the
+# day the bus understands it; nothing here changes.
+#
+# Also parked (spec §7): where ${GOOGLE_CALENDAR_TOKEN} comes from. The OAuth
+# flow is not solved, so the token is an env var for now.
+shal_version: 1
+root:
+  services:
+    driver: shal,http
+    address: https://www.googleapis.com/calendar/v3
+    children:
+      cal:
+        id: cal_personal
+        driver: determlab,google-calendar
+        address: calendars/primary
+        description: "Personal calendar"
+        config:
+          access_token: ${GOOGLE_CALENDAR_TOKEN}
+          max_events: 250

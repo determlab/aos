@@ -1,0 +1,89 @@
+name: daily_summary
+description: >
+  Read one calendar for one day, keep that day's events, order them, and render
+  a plain-text morning summary. No LLM, no clock: `date` arrives as an input, so
+  the same date and the same calendar always produce the same bytes.
+
+inputs:
+  date: "str" # ISO 8601, supplied by the kernel — never read from a clock here
+
+steps:
+  # The only step that touches the world. `cal_personal__read_events` exists in
+  # the registry only because a grant put it there.
+  - name: read
+    brick: cal_personal__read_events
+    params:
+      date_from: "${date}"
+      date_to: "${date}"
+    save_as: fetched
+
+  # Belt and braces: the driver already asked for exactly this window, so this
+  # filter is a no-op on a well-behaved API. It is here so the blueprint's
+  # output depends on `date` alone, whatever the API returns.
+  - name: keep_today
+    brick: filter_dict_list
+    params:
+      items: "${fetched.result}"
+      key: "date"
+      value: "${date}"
+    save_as: todays
+
+  - name: order_by_start
+    brick: sort_dict_list
+    params:
+      items: "${todays.result}"
+      key: "start"
+    save_as: ordered
+
+  - name: count
+    brick: count_dict_list
+    params:
+      items: "${ordered.result}"
+    save_as: counted
+
+  - name: render_lines
+    brick: __for_each__
+    params:
+      items: "${ordered.result}"
+      do_brick: template_string_fill
+      item_kwarg: values
+      static_kwargs:
+        template: "  {start_time}  {title}"
+    save_as: rendered
+
+  # __for_each__ collects each brick's whole return dict; unwrap to the strings.
+  - name: unwrap_lines
+    brick: map_values
+    params:
+      items: "${rendered.result}"
+      key: "result"
+    save_as: lines
+
+  - name: join_lines
+    brick: concatenate_strings
+    params:
+      parts: "${lines.result}"
+      separator: "\n"
+    save_as: body
+
+  - name: render_header
+    brick: template_string_fill
+    params:
+      template: "{date} - {count} event(s)"
+      values:
+        date: "${date}"
+        count: "${counted.result}"
+    save_as: header
+
+  - name: assemble
+    brick: concatenate_strings
+    params:
+      parts:
+        - "${header.result}"
+        - "${body.result}"
+      separator: "\n"
+    save_as: assembled
+
+outputs_map:
+  summary: "${assembled.result}"
+  event_count: "${counted.result}"

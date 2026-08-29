@@ -1,0 +1,16 @@
+# Capability contract (spec §4.1). The id is the file name and maps 1:1 onto the
+# SHAL tool name: cal_personal.read_events -> cal_personal__read_events.
+capability: cal_personal.read_events
+description: Read the events on the personal calendar in an inclusive date window.
+
+input:
+  date_from: date
+  date_to: date
+
+output:
+  events: list # {title, start, end, date, start_time, end_time, all_day, attendees}
+
+# SHAL's vocabulary, not spec §4.1's read|write|dangerous. SHAL has four values
+# and gates {actuator, config}; folding three into four loses the distinction
+# that decides whether the approver fires (CLAUDE.md correction 4).
+side_effect: none

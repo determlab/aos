@@ -1,0 +1,9 @@
+# Authorization (spec §4.3). Delete this file and the run must come back
+# `denied` — with a run record still written. That is the test that matters.
+grant: grant-001
+principal: user:me
+processor: daily-calendar-summary
+capability: cal_personal.read_events
+mode: read_only
+expires: 2026-12-31
+revoked: false
