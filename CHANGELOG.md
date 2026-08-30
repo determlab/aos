@@ -35,6 +35,13 @@ recorded below.
 - `spec/v0.2.md` — the kernel contract.
 - `CLAUDE.md` — working context: verified sibling-repo facts and known traps.
 
+- `docs/DECISIONS.md` — the decision ledger (ops decision-ledger-standard v1.0).
+  D1-D10 are spec §2's locked decisions, moved out of a version-scoped file so
+  the numbers are stable for the life of the product. Adds **D11** (capability
+  contracts use SHAL's four `side_effect` values, superseding the `risk:` field
+  still shown in spec §4.1) and **D12** (AOS ships its own SHAL drivers via the
+  `shal.drivers` entry point). Registered in `.agent-loop.yml`.
+
 ### Changed
 - `[dev]` extra now pins `bricks` by commit and carries `ruff`/`mypy`, so
   `pip install -e ".[dev]"` is one install command identical locally and in CI.
