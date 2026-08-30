@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from bricks.core.models import BrickMeta
@@ -137,5 +137,4 @@ class _TxnCapture(logging.Handler):
 def today_utc() -> date:
     """The kernel's one clock read, kept in a single named place so every other
     module takes the date as an input."""
-    from datetime import datetime, timezone
     return datetime.now(timezone.utc).date()

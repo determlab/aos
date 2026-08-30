@@ -9,6 +9,6 @@ from aos.errors import AosError, CapabilityCallError, GrantDenied, ManifestError
 from aos.record import RunRecord
 from aos.store import Store
 
-__all__ = ["run", "RunRecord", "Store", "AosError", "GrantDenied",
-           "ManifestError", "CapabilityCallError"]
+__all__ = ["AosError", "CapabilityCallError", "GrantDenied", "ManifestError",
+           "RunRecord", "Store", "run"]
 __version__ = "0.2.0"

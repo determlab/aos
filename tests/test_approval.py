@@ -131,6 +131,6 @@ def test_a_denied_actuation_raises_on_the_raw_path_too():
     shal.registry.register(_Siren)
     record = RunRecord.new("p", RUN_DATE)
 
-    with shal.load(SIREN_LAB) as hal, install(record, {}):
-        with pytest.raises(ApprovalDenied):
-            hal.get_device("siren").sound()
+    with (shal.load(SIREN_LAB) as hal, install(record, {}),
+          pytest.raises(ApprovalDenied)):
+        hal.get_device("siren").sound()
