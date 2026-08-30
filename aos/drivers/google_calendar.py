@@ -23,7 +23,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from shal import registry
 from shal.driver import Driver, idempotent, op
-from shal.errors import HopError, LimitError
+from shal.errors import HopError, LimitError, LoadError
 from shal.log import current_txn
 from shal.transport import MessageTransport
 
@@ -53,6 +53,22 @@ class GoogleCalendar(Driver, Calendar):
     def _config(self) -> dict[str, Any]:
         return self.node.spec.get("config") or {}
 
+    @property
+    def _messages(self) -> MessageTransport:
+        """The parent bus, narrowed to what ``kind`` already promises.
+
+        SHAL honours ``kind`` at bind, so in a loaded topology this never fires.
+        It exists so the type is honest — ``Driver.bus`` is ``Transport | None``
+        for every driver — and so a hand-built instance fails with a sentence
+        rather than an AttributeError.
+        """
+        bus = self.bus
+        if not isinstance(bus, MessageTransport):
+            raise LoadError(
+                f"{self.node.path}: {self.compatible} needs a MessageTransport "
+                f"parent bus, got {type(bus).__name__}")
+        return bus
+
     @idempotent  # a read: safe to auto-retry across transient drops
     @op("List this calendar's events between two dates, inclusive. Call when you "
         "need what is scheduled on this calendar for a given day or date range.",
@@ -69,7 +85,7 @@ class GoogleCalendar(Driver, Calendar):
         # before anything is sent, so a malformed date is a structured refusal
         # rather than an exception escaping through call_tool.
         window = self._window(date_from, date_to)
-        reply = self.bus.exchange(self.addr, {
+        reply = self._messages.exchange(self.addr, {
             "method": "GET",
             "path": "events",
             "query": {
@@ -218,7 +234,9 @@ def _install_sim_model() -> None:
     """Register the sim twin. Best-effort: a shal build without the sim bus
     must not stop the real driver from loading."""
     try:
-        from shal.buses.sim_msg import msg_sim_model
+        # local + guarded on purpose: the sim bus is optional, and a shal build
+        # without it must not stop the real driver from registering
+        from shal.buses.sim_msg import msg_sim_model  # noqa: PLC0415
     except ImportError:  # pragma: no cover - the sim bus always ships today
         return
 

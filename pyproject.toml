@@ -18,7 +18,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+# bricks is alpha and not on PyPI (the name is taken by an unrelated project), so
+# it is pinned BY COMMIT here rather than in [dependencies] — a direct URL cannot
+# go in a published dependency list. Keeping it here means `pip install -e .[dev]`
+# is the one install command, identical locally and in CI, with one place to bump.
+# Never float the ref: spec/v0.2.md §8 step 5.
+dev = [
+    "pytest>=7",
+    "ruff>=0.6",
+    "mypy>=1.8",
+    "types-PyYAML",
+    "bricks @ git+https://github.com/determlab/bricks@5c3a5bd401dffcdf50b04a9655cb41fda16f6805",
+]
 
 [project.scripts]
 aos = "aos.cli:main"
@@ -38,7 +49,48 @@ include = ["aos*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
 [tool.ruff.format]
 # Do not format Python code blocks inside Markdown. Ruff 0.16 began doing this
 # and turned determlab/bricks main red for every PR (bricks#14).
 exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "W",    # pycodestyle warnings
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific rules
+    "C4",   # flake8-comprehensions
+    "PTH",  # flake8-use-pathlib
+    "S",    # flake8-bandit (security)
+    "PLC",  # pylint convention
+    "PLE",  # pylint error
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "S101",     # assert is the point of a test
+    "PLC0415",  # local imports keep a fixture's dependencies next to it
+]
+# N818 wants every exception to end in "Error". These deliberately do not: they
+# mirror SHAL's own refusal vocabulary (`ApprovalDenied`), and the kernel's whole
+# subject is refusals, so `GrantDenied` reading as a verdict is the point.
+"aos/errors.py" = ["N818"]
+
+[tool.mypy]
+python_version = "3.10"
+
+[[tool.mypy.overrides]]
+# shal and bricks are alpha siblings installed from source; their stubs are not
+# the contract this repo is testing.
+module = ["shal.*", "bricks.*"]
+ignore_missing_imports = true

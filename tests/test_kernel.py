@@ -166,7 +166,7 @@ def test_run_id_and_clock_are_injectable(estate: Store, run_id: str):
     from datetime import datetime, timezone
     moment = datetime(2026, 8, 31, 7, 0, tzinfo=timezone.utc)
 
-    record = run(estate, now=moment, run_id=run_id)
+    run(estate, now=moment, run_id=run_id)
 
     on_disk = record_on_disk(estate, run_id)
     assert on_disk["run"] == run_id

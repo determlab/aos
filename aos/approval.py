@@ -11,7 +11,9 @@ policy already in the seat, and the run record must show the refusal.
 """
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Mapping
+from types import MappingProxyType
+from typing import Any, Final
 
 import shal
 
@@ -24,12 +26,13 @@ class ProcessorApprover:
     cannot actuate, whatever the blueprint asks for.
     """
 
-    #: grant modes that may answer yes, per SHAL side effect
-    ALLOWED_MODES: dict[str, frozenset[str]] = {
+    #: grant modes that may answer yes, per SHAL side effect. Immutable: a
+    #: policy table that a caller could mutate is not a policy.
+    ALLOWED_MODES: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
         "write": frozenset({"read_write", "write"}),
         "actuator": frozenset({"actuate"}),
         "config": frozenset({"configure"}),
-    }
+    })
 
     def __init__(self, record: RunRecord, grants_by_capability: dict[str, dict]) -> None:
         self._record = record

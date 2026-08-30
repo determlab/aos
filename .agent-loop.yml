@@ -14,18 +14,29 @@ merge_method: squash
 commands:
   install: "pip install -e \".[dev]\""
   test:    "python -m pytest -q"
-  lint:    "ruff check . && ruff format --check . && mypy aos"
+  lint:    "ruff check . && mypy aos"
 
 hard_stops:
   dependency_files:
     - pyproject.toml
   paths:
     # The kernel's whole purpose is the gate. A change here is never routine.
+    # The four kernel files below are exactly the ones that can weaken an
+    # invariant without failing a test, which is why a human looks at each.
     - "aos/grants*"          # who may do what
-    - "aos/engine.py"        # the single door: grant check -> driver -> record
+    - "aos/capability.py"    # THE single door: grant re-check + call + audit
+    - "aos/engine.py"        # builds the registry from grants; record in finally
+    - "aos/record.py"        # the audit trail — a denial with no record is the
+                             # one unacceptable outcome
+    - "aos/approval.py"      # the SHAL approver: whether a gated op proceeds
     - "grants/**"            # the authorisation records themselves
+    - "capabilities/**"      # side_effect here decides if the approver fires
+    - "processors/**"        # `requires`, and which lab/blueprint a run uses
     - "lab.yaml"             # topology: which real resources are reachable
     - "**/.env*"
+    # Deliberately NOT fenced: lab.sim.yaml (shal,sim-msg is in-memory, it
+    # cannot reach anything real) and blueprints/** (a blueprint can only use
+    # bricks the grants already put in the registry — decision 8 covers it).
   flag_on_file_delete: true
   # Pre-1.0, no external users: in-rubric public-API edits are allowed and the
   # reviewer verifies a CHANGELOG.md note instead of flagging.

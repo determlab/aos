@@ -79,7 +79,7 @@ def run(processor_id: str, *, root: Path | None = None, lab: str | Path | None =
         # was refused — a record saying only "1 validation error" audits nothing.
         status = "denied" if _names_a_capability(e, store) else "failed"
         record.finish(status, error="; ".join([str(e), *_details(e)]))
-    except Exception as e:  # noqa: BLE001 — the record is the report
+    except Exception as e:  # the record is the report, whatever went wrong
         record.finish("failed", error=f"{type(e).__name__}: {e}")
     finally:
         if hal is not None:

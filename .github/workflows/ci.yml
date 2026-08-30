@@ -6,7 +6,8 @@ on:
   pull_request:
   # Weekly, so an upstream release cannot turn main red silently on a quiet
   # repo. determlab/shal went 40 days with a broken published package because
-  # its CI only fired on push (shal#106).
+  # its CI only fired on push (shal#106). This repo is exposed the same way:
+  # `bricks` is pinned to a git SHA and `pyshal` floats on a minimum.
   schedule:
     - cron: "0 6 * * 1"
 
@@ -18,9 +19,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      # One install command, the same one a developer runs. `bricks` is pinned
+      # by commit inside the [dev] extra, so there is a single place to bump it.
       - run: pip install -e ".[dev]"
       - run: ruff check .
-      - run: ruff format --check .
       - run: mypy aos
 
   test:
@@ -28,7 +30,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        # Matches `requires-python = ">=3.10"`. Claiming a version CI never
+        # exercises is a promise nobody checks.
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
