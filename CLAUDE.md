@@ -1,3 +1,16 @@
+---
+type: charter
+owner: repo-agent
+scope: repo/aos
+reviewed: 2026-08-29
+---
+
+> **Type is provisional.** `doc-standard.md` §5 puts the working-context file at
+> `docs/agents/context.md` (type `agent-context`); until that move happens this
+> file stays at the root and is typed `charter`, the type whose `HOMES` entry
+> names `CLAUDE.md` explicitly. (Others — `standard`, `reference`, `log` — also
+> accept it, but only incidentally, through a bare `*.md` glob.)
+
 # AOS — Agent Processor SDK
 
 Read `spec/v0.2.md` first. It is the contract. This file is the working context

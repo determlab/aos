@@ -1,3 +1,10 @@
+---
+type: readme
+owner: CMO
+scope: repo/aos
+reviewed: 2026-08-29
+---
+
 # AOS — Agent Processor SDK
 
 A tiny kernel that runs **processors**. One processor = one capability set + one

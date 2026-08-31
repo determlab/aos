@@ -1,3 +1,10 @@
+---
+type: changelog
+owner: repo-agent
+scope: repo/aos
+reviewed: 2026-08-31
+---
+
 # Changelog
 
 All notable changes are documented here. Format follows
@@ -42,7 +49,29 @@ recorded below.
   still shown in spec §4.1) and **D12** (AOS ships its own SHAL drivers via the
   `shal.drivers` entry point). Registered in `.agent-loop.yml`.
 
+- `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md` — how work
+  reaches this repo and what each label does. The issue body is the spec —
+  there is no design doc between an issue and its branch — issues cite decisions
+  by number, and only the founder applies `agent:go`.
+- `.github/ISSUE_TEMPLATE/bug.yml` and `feature.yml` — the agent-ready forms,
+  adapted from shal. Both now ask which decisions the work cites, and default
+  the acceptance checkboxes to commands anyone can run.
+
 ### Changed
+- **Adopted `ops/doc-standard.md` v1.0.** `README.md` (readme/CMO),
+  `CHANGELOG.md` (changelog/repo-agent), `docs/DECISIONS.md` (ledger/repo-agent),
+  `spec/v0.2.md` (spec/CTO) and `CLAUDE.md` (charter/repo-agent) declare
+  front-matter, and `tools/doc-check.py` passes. `reviewed` is each file's last
+  substantive date, not today's: the spec and `CLAUDE.md` still read 2026-08-29.
+  `CLAUDE.md`'s `charter` type is provisional — the standard puts the working
+  context at `docs/agents/context.md`, and that move is deferred because it
+  changes what every session in this repo loads at startup.
+- **`spec/v0.2.md` §2 no longer restates D1–D10.** It points at
+  `docs/DECISIONS.md` and keeps only the reasoning a one-line ledger claim
+  cannot hold. Both files were `review.standards_sources`, so two copies of the
+  same ten claims meant the reviewer read the drift as agreement — §4.1's
+  `risk:` field had already gone stale against D11. The ledger is now the only
+  place a decision is stated.
 - `[dev]` extra now pins `bricks` by commit and carries `ruff`/`mypy`, so
   `pip install -e ".[dev]"` is one install command identical locally and in CI.
   `bricks` is alpha and not on PyPI; never float the ref (spec §8 step 5).
