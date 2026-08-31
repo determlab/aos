@@ -11,7 +11,11 @@ Locked architectural decisions. **Append; never silently re-litigate.**
 Issues cite these by number. Superseding a decision is itself a decision.
 
 D1–D10 were locked in the chat session of 2026-08-29 and are reproduced here
-verbatim in claim form; `spec/v0.2.md` §2 carries the reasoning behind each. They
+verbatim in claim form. `spec/v0.2.md` §2 does not restate them; it keeps only
+the parts that a one-line claim has no room for — what the D4 determinism
+boundary is actually about, D7 spelled out on a real capability id, why D8 ends
+a run as `denied` rather than raising, and why D9 needs no new SHAL code. The
+other decisions stand on the claim alone. They
 moved out of the spec on 2026-08-30 because a decision number is stable for the
 life of the product while `spec/v0.2.md` is a versioned snapshot — leaving
 life-of-product identifiers inside a file that `v0.3` supersedes guarantees a

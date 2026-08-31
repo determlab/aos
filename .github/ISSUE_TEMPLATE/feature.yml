@@ -8,9 +8,8 @@ body:
         Keep it **scoped**. One outcome per issue. The agent-loop only runs on
         issues with a clear goal + testable acceptance criteria. Vague or huge?
         Split it first. **No DoD, no start** — this template IS the DoD
-        (determlab dod-standard v1.0), and `.agent-loop.yml` sets
-        `spec_source: issue`, so nothing else stands between this body and the
-        branch. When it's ready, label it `ready-for-agent`; **only the founder
+        (determlab dod-standard v1.0), and nothing else stands between this body
+        and the branch. When it's ready, label it `ready-for-agent`; **only the founder
         adds `agent:go`** (decision 2026-07-19).
   - type: dropdown
     id: task_type
@@ -121,9 +120,11 @@ body:
         deleting a file the branch didn't create, anything touching secrets, and the
         paths `.agent-loop.yml` fences: the kernel gate (`aos/grants*`,
         `aos/capability.py`, `aos/engine.py`, `aos/record.py`, `aos/approval.py`),
-        `grants/**`, `capabilities/**`, `processors/**`, `lab.yaml`, `**/.env*`.
-        `.agent-loop.yml` itself is the founder's — it decides what an agent may
-        change unreviewed, so an agent may not change it.
+        `grants/**`, `capabilities/**`, `processors/**`, `lab.yaml`, `**/.env*` —
+        though the path fences are inert until determlab/aos#5 lands (the config
+        writes `hard_stops.paths`, agent-loop reads `hard_stops.protected_paths`).
+        `.agent-loop.yml` itself is the founder's: it decides what an agent may
+        change unreviewed, so a change to it needs the founder to queue it.
 
         In-rubric public-API edits are allowed pre-1.0 (0.x semver) — the reviewer
         verifies a `CHANGELOG.md` note instead. Max 4 coder/reviewer rounds; if they

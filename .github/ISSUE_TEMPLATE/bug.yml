@@ -9,8 +9,8 @@ body:
         **expected vs actual**. The fix's acceptance criterion is usually "the repro
         now passes as a regression test."
 
-        `.agent-loop.yml` sets `spec_source: issue` — this form IS the brief the
-        coder works from and the rubric the reviewer scores against. No testable
+        This form IS the brief the coder works from and the rubric the reviewer
+        scores against — there is no design doc in between. No testable
         acceptance criteria, no run. Only the founder adds `agent:go`.
   - type: textarea
     id: summary
@@ -84,6 +84,8 @@ body:
         new runtime dependency, a schema/data migration, a file deletion, or a change
         under `.agent-loop.yml: hard_stops` — the kernel gate (`aos/grants*`,
         `aos/capability.py`, `aos/engine.py`, `aos/record.py`, `aos/approval.py`),
-        `grants/**`, `capabilities/**`, `processors/**`, `lab.yaml`, any `.env*`.
+        `grants/**`, `capabilities/**`, `processors/**`, `lab.yaml`, any `.env*` —
+        though the path fences are inert until determlab/aos#5 lands (the config
+        writes `hard_stops.paths`, agent-loop reads `hard_stops.protected_paths`).
         Pre-1.0 the public API may change in-rubric; the reviewer verifies a
         `CHANGELOG.md` entry instead of flagging.

@@ -17,7 +17,7 @@ start on it.
 
 ## An issue is the specification
 
-`.agent-loop.yml` sets `spec_source: issue`. There is no design doc between the
+There is no design doc between the
 issue and the branch — the issue body *is* the brief the coder works from and
 the rubric the reviewer scores against. The loop reads it, and if it does not
 find a goal plus **testable acceptance criteria** it refuses the issue, labels
@@ -76,7 +76,7 @@ produce a draft PR plus `agent:needs-human`, never a merge.
 |---|---|---|
 | [#3](https://github.com/determlab/aos/issues/3) | Enforce grant mode, and gate writes — a `read_only` grant currently executes a write | Open, **blocked**. The mode-validation half is doable now; the second half seats SHAL's gated-effects policy beside the approver and needs determlab/shal#114 first. Cites D8: grants are all-or-nothing today. Latent, not live — no processor declares a write capability yet. |
 | [#4](https://github.com/determlab/aos/issues/4) | Adopt doc-standard: decisions exist twice, and both copies are standards sources | Open, `agent:working`, `ready-for-agent`. This document is part of its output. |
-| [#5](https://github.com/determlab/aos/issues/5) | `hard_stops.paths` is not a key agent-loop reads — all ten path stops are inert | Open. `.agent-loop.yml` writes `hard_stops.paths:` where agent-loop 0.1.0 reads `hard_stops.protected_paths:`, so every path fence above is currently doing nothing. Only the founder can fix it — `.agent-loop.yml` governs what an agent may change unreviewed, so an agent may not change it. |
+| [#5](https://github.com/determlab/aos/issues/5) | `hard_stops.paths` is not a key agent-loop reads — all ten path stops are inert | Open. `.agent-loop.yml` writes `hard_stops.paths:` where agent-loop 0.1.0 reads `hard_stops.protected_paths:`, so every path fence above is currently doing nothing. Carries `agent:go`. The `.agent-loop.yml` edit was deferred out of #4's PR by founder decision for that round — that is not a standing rule against agents touching the file. |
 
 Keep this table honest or delete it. A stale list of "current" issues is worse
 than no list; check `gh issue list --state open` before trusting it.
