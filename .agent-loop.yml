@@ -4,10 +4,17 @@ version: 1
 branch_base: main
 max_rounds: 4
 
-# Merge on reviewer PASS + green required CI. The founder gate is at the ISSUE:
-# only the founder applies agent:go (decision 2026-07-19).
-# NOTE: auto-merge is refused unless branch protection has a required status
-# check AND allow_auto_merge is true at the repo level. Both are set here.
+# Merge on reviewer PASS + green required CI. The gate is at the ISSUE, and since
+# 2026-09-01 it is a ladder rather than the founder alone: COO for a pre-approved
+# category, CTO when that is a design judgement, founder otherwise
+# (ops/agents/decision-ledger-standard.md §6).
+#
+# NOTE: auto-merge needs BOTH a required status check on the base branch AND
+# allow_auto_merge at the repo level. Only the second is true today — `main` is
+# unprotected, so every PR here merges by hand. Arm protection only AFTER this
+# file's fences are live, never before: arming first switches auto-merge on over
+# a dead fence in one action, and the repo gets less safe at the moment it looks
+# like it is being hardened.
 auto_merge: true
 merge_method: squash
 
@@ -19,7 +26,7 @@ commands:
 hard_stops:
   dependency_files:
     - pyproject.toml
-  paths:
+  protected_paths:
     # The kernel's whole purpose is the gate. A change here is never routine.
     # The four kernel files below are exactly the ones that can weaken an
     # invariant without failing a test, which is why a human looks at each.
@@ -33,7 +40,14 @@ hard_stops:
     - "capabilities/**"      # side_effect here decides if the approver fires
     - "processors/**"        # `requires`, and which lab/blueprint a run uses
     - "lab.yaml"             # topology: which real resources are reachable
-    - "**/.env*"
+    - "**/.env*"             # not-yet: and never should be. `.env` is gitignored,
+                             # so this can only ever match via `git add -f` — the
+                             # act it exists to stop. Expected to match nothing,
+                             # permanently; `not-yet` is the only marker the
+                             # validator recognises, there is no `never`.
+    - ".agent-loop.yml"      # the file that defines what counts as routine work;
+                             # a system where routine work can redefine "routine"
+                             # has no third layer at all (#5)
     # Deliberately NOT fenced: lab.sim.yaml (shal,sim-msg is in-memory, it
     # cannot reach anything real) and blueprints/** (a blueprint can only use
     # bricks the grants already put in the registry — decision 8 covers it).
@@ -48,4 +62,5 @@ review:
     - CLAUDE.md              # verified facts, traps, ground rules
     - spec/v0.2.md           # the contract — the reasoning behind D1-D10
     - README.md
-  spec_source: issue
+  # `spec_source` was retired in agent-loop 0.2.0 — it had one legal value and
+  # nothing ever read it. The reviewer's Spec axis is always the originating issue.

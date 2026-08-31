@@ -18,6 +18,21 @@ recorded below.
 
 ## [Unreleased]
 
+### Fixed
+- **The kernel path fences were inert.** `.agent-loop.yml` declared the stop list
+  under `hard_stops.paths:`, which agent-loop reads nothing from — the key is
+  `hard_stops.protected_paths:`. All ten entries, including `grants/**` and
+  `aos/capability.py`, fenced nothing from the day they were written. Renamed;
+  the list itself was correct and is unchanged. (#5)
+  - `.agent-loop.yml` now fences itself. It defines what counts as routine work,
+    and a system where routine work can redefine "routine" has no third layer.
+  - `**/.env*` carries a `not-yet:` marker: it is gitignored, so it can only ever
+    match through `git add -f` — the act it exists to stop.
+  - Dropped `review.spec_source`, retired in agent-loop 0.2.0.
+  - Corrected two stale claims in the same file: `agent:go` became a ladder on
+    2026-09-01, and auto-merge is **not** armed here — `main` is unprotected, so
+    every PR merges by hand.
+
 ### Added
 - **The kernel.** `aos.run(processor_id)` runs one processor once and always
   returns a `RunRecord`. Public surface: `run`, `RunRecord`, `Store`,
