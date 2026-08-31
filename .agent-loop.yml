@@ -44,7 +44,8 @@ hard_stops:
 
 review:
   standards_sources:
+    - docs/DECISIONS.md      # D1-Dn, the locked decisions an issue cites by number
     - CLAUDE.md              # verified facts, traps, ground rules
-    - spec/v0.2.md           # the contract
+    - spec/v0.2.md           # the contract — the reasoning behind D1-D10
     - README.md
   spec_source: issue
