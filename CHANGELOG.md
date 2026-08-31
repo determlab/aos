@@ -50,9 +50,9 @@ recorded below.
   `shal.drivers` entry point). Registered in `.agent-loop.yml`.
 
 - `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md` — how work
-  reaches this repo and what each label does. The issue body is the spec
-  (`spec_source: issue`), issues cite decisions by number, and only the founder
-  applies `agent:go`.
+  reaches this repo and what each label does. The issue body is the spec —
+  there is no design doc between an issue and its branch — issues cite decisions
+  by number, and only the founder applies `agent:go`.
 - `.github/ISSUE_TEMPLATE/bug.yml` and `feature.yml` — the agent-ready forms,
   adapted from shal. Both now ask which decisions the work cites, and default
   the acceptance checkboxes to commands anyone can run.

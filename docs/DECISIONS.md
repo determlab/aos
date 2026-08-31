@@ -15,8 +15,9 @@ verbatim in claim form. `spec/v0.2.md` §2 does not restate them; it keeps only
 the parts that a one-line claim has no room for — what the D4 determinism
 boundary is actually about, D7 spelled out on a real capability id, why D8 ends
 a run as `denied` rather than raising, and why D9 needs no new SHAL code. The
-other decisions stand on the claim alone. They
-moved out of the spec on 2026-08-30 because a decision number is stable for the
+other decisions stand on the claim alone.
+
+All ten moved out of the spec on 2026-08-30 because a decision number is stable for the
 life of the product while `spec/v0.2.md` is a versioned snapshot — leaving
 life-of-product identifiers inside a file that `v0.3` supersedes guarantees a
 migration later, and doing it now (ten decisions, zero citations) is free.
