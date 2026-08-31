@@ -1,0 +1,130 @@
+name: "Feature / task (agent-ready)"
+description: "A scoped piece of work an agent or a human can pick up. Fill every field. No DoD, no start."
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep it **scoped**. One outcome per issue. The agent-loop only runs on
+        issues with a clear goal + testable acceptance criteria. Vague or huge?
+        Split it first. **No DoD, no start** — this template IS the DoD
+        (determlab dod-standard v1.0), and `.agent-loop.yml` sets
+        `spec_source: issue`, so nothing else stands between this body and the
+        branch. When it's ready, label it `ready-for-agent`; **only the founder
+        adds `agent:go`** (decision 2026-07-19).
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: Type
+      description: Picks the rubric — each type has a different real consumer.
+      options:
+        - "feature — consumer: cold user on a clean machine reaches first value"
+        - "bugfix — consumer: failing repro first, then a regression test"
+        - "processor — consumer: one manifest, one grant, one blueprint, an audit record for every run"
+        - "docs — consumer: the next session reads it and needs no chat context"
+        - "research — consumer: decision-ready recommendation, cited"
+        - "ops/process — consumer: live AND enforced/verifiable"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why / milestone
+      description: Which milestone this serves + what's true for the consumer when it's done.
+      placeholder: "Serves the MVP definition of done. A denied run leaves an audit record even when the grant file is gone."
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One or two sentences — what should be true when this is done, and why.
+      placeholder: "A `read_only` grant cannot execute a write op, and the refusal lands in the run record."
+    validations:
+      required: true
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Decisions
+      description: "Cite docs/DECISIONS.md by number — `implements D8`, `supersedes D11`. If this needs an OPEN decision (O1-O3) settled first, it is not agent-ready: say so and label `ready-for-human`."
+      placeholder: |
+        implements D3 (one door), D10 (two-layer safety)
+        blocked by O1 (where the calendar credential comes from)
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria (binary rubric)
+      description: "Testable pass/fail checkboxes. The reviewer checks the diff against these, one by one. A criterion nobody can run is not a criterion."
+      value: |
+        - [ ]
+        - [ ]
+        - [ ] `python -m pytest -q` green
+        - [ ] `ruff check .` and `mypy aos` clean
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: How each criterion is checked (fresh env / command / run record) and what evidence gets linked.
+      placeholder: |
+        Clean venv: pip install -e ".[dev]" && python -m pytest -q
+        rm grants/grant-001.yaml && aos run daily-calendar-summary --date 2026-08-31 -> exit 2, paste runs/run-*.yaml
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Don't-touch areas, perf/compat limits, conventions to follow.
+      placeholder: |
+        Python 3.10-compatible. Kernel stays under ~500 lines.
+        No clock or CSPRNG inside a blueprint — the run date arrives as an input.
+    validations:
+      required: false
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: Explicitly what NOT to do. If the work grows >20% beyond this scope — stop and re-plan, don't push through.
+      placeholder: "No new processor. No changes to .agent-loop.yml. Don't fix `shal mcp` as a side quest."
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / starting points
+      description: Files, functions, links, prior art the implementer should start from. Sibling repos are cloned at ../shal and ../bricks.
+      placeholder: "See aos/drivers/google_calendar.py; shal/src/shal/drivers/tmp102.py is the shape it copies."
+    validations:
+      required: false
+  - type: textarea
+    id: docs_to_update
+    attributes:
+      label: Docs to update ("Merged" ≠ done)
+      description: The docs this change touches — refreshed before the issue closes.
+      value: |
+        - [ ] `CHANGELOG.md` entry under Unreleased
+        - [ ] `docs/DECISIONS.md` — new D-number, or a Verification line
+        - [ ] `README.md` / `spec/v0.2.md` if the contract moved
+        - [ ] front-matter `reviewed` bumped ONLY if the owner re-confirmed the content
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Hard-stops:** genuinely risky changes stop the agent-loop and flag a
+        human — new runtime dependencies (`pyproject.toml`), schema/data migrations,
+        deleting a file the branch didn't create, anything touching secrets, and the
+        paths `.agent-loop.yml` fences: the kernel gate (`aos/grants*`,
+        `aos/capability.py`, `aos/engine.py`, `aos/record.py`, `aos/approval.py`),
+        `grants/**`, `capabilities/**`, `processors/**`, `lab.yaml`, `**/.env*`.
+        `.agent-loop.yml` itself is the founder's — it decides what an agent may
+        change unreviewed, so an agent may not change it.
+
+        In-rubric public-API edits are allowed pre-1.0 (0.x semver) — the reviewer
+        verifies a `CHANGELOG.md` note instead. Max 4 coder/reviewer rounds; if they
+        run out you get a draft PR and `agent:needs-human`, never a merge.

@@ -1,0 +1,89 @@
+name: "Bug (agent-ready)"
+description: "A defect with a reproduction. Fill every field so an agent can fix it."
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A bug the agent-loop can fix needs a **reproduction** and a clear
+        **expected vs actual**. The fix's acceptance criterion is usually "the repro
+        now passes as a regression test."
+
+        `.agent-loop.yml` sets `spec_source: issue` — this form IS the brief the
+        coder works from and the rubric the reviewer scores against. No testable
+        acceptance criteria, no run. Only the founder adds `agent:go`.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence — what's broken.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps or a minimal snippet/command. The smaller, the better.
+      placeholder: |
+        1. .venv\Scripts\python -m aos run daily-calendar-summary --date 2026-08-31
+        2. cat runs/run-*.yaml
+        3.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: Expected vs actual
+      value: |
+        **Expected:**
+        **Actual:**
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How we'll know it's fixed. Default to a regression test. Binary pass/fail — the reviewer walks these one by one.
+      value: |
+        - [ ] A regression test reproduces the bug and now passes
+        - [ ] `python -m pytest -q` green
+        - [ ]
+    validations:
+      required: true
+  - type: input
+    id: decisions
+    attributes:
+      label: Decisions this touches
+      description: "Numbers from docs/DECISIONS.md, e.g. `D8`, `supersedes D11`. Leave blank if none. If the fix depends on an open decision (O1-O3), it is not agent-ready."
+      placeholder: "D3 — the fix must keep every call going through the single door"
+    validations:
+      required: false
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS / Python version / commit, and which topology (`lab.sim.yaml` or `lab.yaml`).
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Suspected area / context
+      description: Files or functions you suspect, links, logs, run record ids.
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Hard-stops:** the loop flags a human instead of coding if the fix needs a
+        new runtime dependency, a schema/data migration, a file deletion, or a change
+        under `.agent-loop.yml: hard_stops` — the kernel gate (`aos/grants*`,
+        `aos/capability.py`, `aos/engine.py`, `aos/record.py`, `aos/approval.py`),
+        `grants/**`, `capabilities/**`, `processors/**`, `lab.yaml`, any `.env*`.
+        Pre-1.0 the public API may change in-rubric; the reviewer verifies a
+        `CHANGELOG.md` entry instead of flagging.

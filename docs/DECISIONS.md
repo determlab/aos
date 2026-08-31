@@ -1,3 +1,10 @@
+---
+type: ledger
+owner: repo-agent
+scope: repo/aos
+reviewed: 2026-08-31
+---
+
 # AOS — Decision Ledger
 
 Locked architectural decisions. **Append; never silently re-litigate.**
