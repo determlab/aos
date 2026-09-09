@@ -5,7 +5,9 @@ Three rules the code must keep:
 1. The blueprint can only see bricks that exist in the registry, and the
    registry is built *from the grants* — so policy is validation. An ungranted
    capability does not exist, ``run_blueprint`` refuses it before executing
-   anything, and the run is ``denied`` by construction (decision 8).
+   anything, and the run is ``denied`` by construction (decision 8). The
+   ordinary bricks come from the manifest's pack allowlist for the same reason
+   — see :mod:`aos.packs`.
 2. :func:`aos.capability.make_capability_brick` is the single door.
 3. ``write_run_record`` runs in ``finally`` — success, failure, and denial all
    produce a record.
@@ -18,13 +20,14 @@ from pathlib import Path
 from typing import Any
 
 import shal
-from bricks import build_default_registry, run_blueprint
+from bricks import run_blueprint
 from bricks.core.exceptions import BlueprintValidationError
 
 from aos import approval
 from aos.capability import make_capability_brick, today_utc, tool_name
 from aos.errors import GrantDenied
 from aos.grants import require_grant
+from aos.packs import build_registry
 from aos.record import RunRecord, write_run_record
 from aos.store import REPO_ROOT, Store
 
@@ -54,8 +57,11 @@ def run(processor_id: str, *, root: Path | None = None, lab: str | Path | None =
         # 2. resources — SHAL owns transports, retry, and the write gate
         hal = shal.load(_lab_path(store, manifest, lab))
 
-        # 3. registry — grants become bricks; nothing else can
-        registry = build_default_registry()
+        # 3. registry — grants become bricks; nothing else can. The pack
+        #    allowlist is the other half of that sentence: `bricks` would
+        #    otherwise load every installed pack, so installing a package would
+        #    grant its bricks. Named packs only — an unnamed one is absent.
+        registry = build_registry(store.pack_allowlist(manifest))
         for capability_id, grant in grants.items():
             brick, meta = make_capability_brick(hal, capability_id, grant,
                                                 record, store)

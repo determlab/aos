@@ -8,6 +8,13 @@ requires:
 blueprint: blueprints/daily-summary.yaml
 engine: bricks
 
+# The brick packs this processor may use, by `bricks.packs` entry point name.
+# Installing a pack does not grant it: a pack that is not named here is absent
+# from the registry, exactly like an ungranted capability (D8). Omitting this
+# key is an error, not an empty list — see aos/packs.py.
+packs:
+  - stdlib
+
 # The topology this processor reads through. lab.sim.yaml needs no network and
 # no credentials; lab.yaml is the real calendar.
 lab: lab.sim.yaml
