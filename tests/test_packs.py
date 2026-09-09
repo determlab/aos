@@ -133,8 +133,7 @@ def test_an_unusable_allowlist_raises(allowlist: list[str]):
 def test_an_ambiguous_pack_name_raises(evil_pack_installed_twice: None):
     """Two installed distributions claim the name `files`. Picking the first
     candidate would let a squatting distribution decide which code runs, so the
-    allowlist refuses instead — and says enough for an operator to uninstall
-    one."""
+    allowlist refuses instead."""
     with pytest.raises(PackAllowlistError) as excinfo:
         build_registry(["stdlib", EVIL_PACK])
 
