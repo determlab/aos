@@ -31,29 +31,45 @@ RUN_DATE = date.fromisoformat(SAMPLE_DATE)
 EVIL_PACK = "files"
 EVIL_BRICK = "delete_tree"
 EVIL_MODULE = "tests_fake_io_pack"
+#: A second distribution claiming the *same* pack name — the squatting case.
+RIVAL_MODULE = "tests_fake_rival_pack"
+
+
+def _install(monkeypatch: pytest.MonkeyPatch, *modules: str) -> None:
+    """`pip install`, simulated at the entry point layer: every module in
+    *modules* publishes a `bricks.packs` entry point named EVIL_PACK."""
+    fakes = []
+    for module_name in modules:
+        module = types.ModuleType(module_name)
+
+        def register(registry: BrickRegistry) -> None:  # bricks' pack protocol
+            registry.register(EVIL_BRICK, lambda **kw: {"result": "boom"},
+                              BrickMeta(name=EVIL_BRICK, description="world-touching"))
+
+        module.register = register  # type: ignore[attr-defined]
+        monkeypatch.setitem(sys.modules, module_name, module)
+        fakes.append(importlib.metadata.EntryPoint(
+            name=EVIL_PACK, value=module_name, group="bricks.packs"))
+
+    real = importlib.metadata.entry_points
+
+    def entry_points(**kwargs):
+        found = list(real(**kwargs))
+        return [*found, *fakes] if kwargs.get("group") == "bricks.packs" else found
+
+    monkeypatch.setattr(importlib.metadata, "entry_points", entry_points)
 
 
 @pytest.fixture
 def installed_evil_pack(monkeypatch: pytest.MonkeyPatch) -> None:
     """`pip install bricks-files`, simulated at the entry point layer."""
-    module = types.ModuleType(EVIL_MODULE)
+    _install(monkeypatch, EVIL_MODULE)
 
-    def register(registry: BrickRegistry) -> None:  # bricks' own pack protocol
-        registry.register(EVIL_BRICK, lambda **kw: {"result": "boom"},
-                          BrickMeta(name=EVIL_BRICK, description="world-touching"))
 
-    module.register = register  # type: ignore[attr-defined]
-    monkeypatch.setitem(sys.modules, EVIL_MODULE, module)
-
-    real = importlib.metadata.entry_points
-    fake = importlib.metadata.EntryPoint(name=EVIL_PACK, value=EVIL_MODULE,
-                                         group="bricks.packs")
-
-    def entry_points(**kwargs):
-        found = list(real(**kwargs))
-        return [*found, fake] if kwargs.get("group") == "bricks.packs" else found
-
-    monkeypatch.setattr(importlib.metadata, "entry_points", entry_points)
+@pytest.fixture
+def evil_pack_installed_twice(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Two distributions both publishing a `bricks.packs` pack named `files`."""
+    _install(monkeypatch, EVIL_MODULE, RIVAL_MODULE)
 
 
 # ---- absence is the mechanism ----------------------------------------------
@@ -112,6 +128,20 @@ def test_an_unusable_allowlist_raises(allowlist: list[str]):
     with no bricks would deny everything and look like the gate working."""
     with pytest.raises(PackAllowlistError):
         build_registry(allowlist)
+
+
+def test_an_ambiguous_pack_name_raises(evil_pack_installed_twice: None):
+    """Two installed distributions claim the name `files`. Picking the first
+    candidate would let a squatting distribution decide which code runs, so the
+    allowlist refuses instead — and says enough for an operator to uninstall
+    one."""
+    with pytest.raises(PackAllowlistError) as excinfo:
+        build_registry(["stdlib", EVIL_PACK])
+
+    message = str(excinfo.value)
+    assert EVIL_PACK in message  # which name is contested
+    assert "more than one" in message  # and why it could not be resolved
+    assert "stdlib" not in message  # the unambiguous pack is not blamed
 
 
 @pytest.mark.parametrize("packs", [None, []])

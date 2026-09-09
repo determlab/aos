@@ -59,7 +59,10 @@ class Store:
         return m
 
     def pack_allowlist(self, manifest: dict[str, Any]) -> list[str]:
-        """The brick packs this processor may use (spec §4.4, decision 8).
+        """The brick packs this processor may use (decision 13, extending 8).
+
+        Not in ``spec/v0.2.md`` §4.4 — that manifest example predates
+        ``packs:``. ``docs/DECISIONS.md`` D13 is the contract.
 
         Names are ``bricks.packs`` entry point names. An absent key returns an
         empty list; :func:`aos.packs.build_registry` is what refuses it, so

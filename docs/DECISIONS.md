@@ -60,6 +60,9 @@ Whether a decision is true *in the code today* (standard §8 — the gap is the 
   absent from the registry unless allowlisted, and an empty allowlist raises
   `PackAllowlistError` rather than yielding an empty registry. Closes eval row
   aos E2; the deadline was bricks#2 (`bricks-files`, `bricks-http`) shipping.
+  **D13 also supersedes the manifest example** shown in `spec/v0.2.md` §4.4,
+  which has no `packs:` key. That spec text is stale; a manifest copied from it
+  names no packs and so raises `PackAllowlistError` on its first run.
 - **D11 — supersedes the `risk: read|write|dangerous` field** shown in
   `spec/v0.2.md` §4.1. That spec text is stale; `capabilities/*.yaml` and
   `aos/capability.py` use SHAL's four values.
