@@ -21,3 +21,12 @@ class ManifestError(AosError):
 
 class CapabilityCallError(AosError):
     """A granted capability was called and the driver refused or failed."""
+
+
+class PackAllowlistError(AosError):
+    """The brick packs a processor may use could not be resolved.
+
+    Not a denial: a missing or empty allowlist is a mis-declared processor, and
+    it must read as `failed`. A run that quietly built an empty registry would
+    deny everything and look like the gate working (spec decision 8).
+    """

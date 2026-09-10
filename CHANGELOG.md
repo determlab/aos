@@ -19,6 +19,27 @@ recorded below.
 ## [Unreleased]
 
 ### Fixed
+- **An installed brick pack was a granted capability.** The kernel called
+  `bricks.build_default_registry()`, which loads *every* `bricks.packs` entry
+  point — so `pip install <io-pack>` would have added world-touching bricks to
+  a processor's registry with no grant, no capability contract and no run
+  record. The registry is now built by `aos.packs.build_registry()` from an
+  explicit `packs:` allowlist in the processor manifest. **D13**, extending D8
+  to the bricks the kernel did not write. (#8, eval row aos E2)
+  - A pack that is installed but not named is **absent** from the registry, the
+    same mechanism that makes an ungranted capability not exist. There is no
+    call-time check: a check can be forgotten on one path, absence cannot.
+  - Omitting `packs:` is an error, not an empty allowlist. A kernel that
+    quietly built an empty registry would deny everything, and "denies
+    everything" is indistinguishable from a gate working — so it raises
+    `PackAllowlistError` and the run is a loud `failed`, never a plausible
+    `denied`. So is naming a pack that is not installed: skipping it would
+    silently turn a processor into a different processor.
+  - The DSL builtins (`__for_each__`, `__branch__`) come from the engine, not
+    from a pack, and are still always registered.
+  - Public surface: `PackAllowlistError` is exported from `aos`.
+    `processors/daily-calendar-summary.yaml` gains `packs: [stdlib]`; every
+    manifest now needs one.
 - **The kernel path fences were inert.** `.agent-loop.yml` declared the stop list
   under `hard_stops.paths:`, which agent-loop reads nothing from — the key is
   `hard_stops.protected_paths:`. All ten entries, including `grants/**` and

@@ -58,6 +58,23 @@ class Store:
             raise ManifestError(f"{processor_id}: manifest has no `blueprint`")
         return m
 
+    def pack_allowlist(self, manifest: dict[str, Any]) -> list[str]:
+        """The brick packs this processor may use (decision 13, extending 8).
+
+        Not in ``spec/v0.2.md`` §4.4 — that manifest example predates
+        ``packs:``. ``docs/DECISIONS.md`` D13 is the contract.
+
+        Names are ``bricks.packs`` entry point names. An absent key returns an
+        empty list; :func:`aos.packs.build_registry` is what refuses it, so
+        "declared nothing" and "declared []" fail the same loud way.
+        """
+        names = manifest.get("packs") or []
+        if not isinstance(names, list) or not all(isinstance(n, str) for n in names):
+            raise ManifestError(
+                f"{manifest.get('processor')}: `packs` must be a list of brick "
+                f"pack names, got {names!r}")
+        return list(names)
+
     def capability(self, capability_id: str) -> dict[str, Any]:
         """One capability contract (spec §4.1)."""
         return _read(self.capabilities / f"{capability_id}.yaml", "capability")

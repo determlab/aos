@@ -36,6 +36,7 @@ migration later, and doing it now (ten decisions, zero citations) is free.
 | D10 | **Two-layer safety, no overlap** — AOS gates by processor identity (grants), SHAL gates by op risk; keep both | spec v0.2 §2 |
 | D11 | **Capability contracts use SHAL's `side_effect` vocabulary** (`none\|write\|actuator\|config`), not a three-value `risk:` field — three values cannot express the `{actuator, config}` boundary that decides whether the approver fires | this doc, 2026-08-30 |
 | D12 | **AOS ships its own SHAL drivers**, registered through the `shal.drivers` entry point, rather than adding them to the shal repo — a driver belongs with the processor that needs it, and SHAL never imports a module named by a config string | this doc, 2026-08-30 |
+| D13 | **Installing a brick pack does not grant it** — the kernel builds the registry from an explicit `packs:` allowlist in the processor manifest, so an installed but unnamed pack is *absent*, not refused at call time; a manifest that names no packs is an error, not an empty allowlist, because a kernel that quietly ran with an empty registry would deny everything and be indistinguishable from a working gate (extends D8 to the bricks the kernel did not write; D3) | this doc, 2026-09-10 |
 
 ## Verification
 
@@ -52,6 +53,17 @@ Whether a decision is true *in the code today* (standard §8 — the gap is the 
   body, so it cannot express a `GET`, query params, or an `Authorization`
   header. That is determlab/shal#104, and it is the whole distance between the
   sim calendar and the real one. `lab.yaml` is written and inert until it lands.
+- **D13 — real since 2026-09-10.** `aos/packs.py` builds the registry from the
+  manifest's `packs:` list instead of `bricks.build_default_registry()`, which
+  loads every `bricks.packs` entry point (`bricks/packs.py:14`). Tested in
+  `tests/test_packs.py`: a fake pack installed through a real entry point is
+  absent from the registry unless allowlisted, and an empty allowlist raises
+  `PackAllowlistError` rather than yielding an empty registry. Closes eval row
+  aos E2; the deadline was bricks#2 (`bricks-files`, `bricks-http`) shipping.
+  **D13 also supersedes the manifest example** shown in `spec/v0.2.md` §4.4,
+  which has no `packs:` key. That spec text is stale; a manifest copied from it
+  names no packs, and once it reaches registry construction it raises
+  `PackAllowlistError`.
 - **D11 — supersedes the `risk: read|write|dangerous` field** shown in
   `spec/v0.2.md` §4.1. That spec text is stale; `capabilities/*.yaml` and
   `aos/capability.py` use SHAL's four values.
