@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Mapping
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
@@ -96,13 +97,24 @@ class GoogleCalendar(Driver, Calendar):
             },
             "headers": {"Authorization": f"Bearer {token}"} if token else {},
         })
-        if not isinstance(reply, dict) or "items" not in reply:
+        # pyshal >= 0.3.0 (shal#104): an envelope's reply is
+        # {status, headers, json | text}. The bus already raises on non-2xx;
+        # the status check here keeps the driver honest on any bus.
+        status = reply.get("status") if isinstance(reply, Mapping) else None
+        if not isinstance(status, int) or not 200 <= status < 300:
             raise HopError(
-                f"calendar reply carries no 'items' (got "
-                f"{sorted(reply)[:5] if isinstance(reply, dict) else type(reply).__name__})",
+                f"calendar answered HTTP {status}" if isinstance(status, int)
+                else "calendar reply carries no HTTP status",
                 path=self.node.path, hop="google-calendar",
                 txn=current_txn.get(), delivered="unknown")
-        return [_normalize(item) for item in reply["items"]
+        body = reply.get("json")
+        if not isinstance(body, Mapping) or "items" not in body:
+            raise HopError(
+                f"calendar reply body carries no 'items' (got "
+                f"{sorted(body)[:5] if isinstance(body, Mapping) else type(body).__name__})",
+                path=self.node.path, hop="google-calendar",
+                txn=current_txn.get(), delivered="unknown")
+        return [_normalize(item) for item in body["items"]
                 if item.get("status") != "cancelled"]
 
     def _window(self, date_from: str, date_to: str) -> dict[str, str]:

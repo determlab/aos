@@ -76,6 +76,29 @@ def test_a_custom_calendar_can_be_simulated(hal, tmp_path, monkeypatch):
     assert reply["result"][0]["start_time"] == "08:30"
 
 
+# ---- the shal,http envelope reply (pyshal >= 0.3.0, shal#104) ----------------
+
+@pytest.mark.parametrize(("bus_reply", "said"), [
+    ({"status": 503, "headers": {}, "json": {"items": []}}, "HTTP 503"),
+    ({"headers": {}, "json": {"items": []}}, "no HTTP status"),
+    ({"status": 200, "headers": {}, "text": "<html>login</html>"}, "no 'items'"),
+    ({"items": []}, "no HTTP status"),  # the pre-0.3.0 bare body
+])
+def test_a_reply_that_is_not_a_2xx_json_calendar_is_refused(hal, monkeypatch,
+                                                            bus_reply, said):
+    """The bus answers ``{status, headers, json | text}``. Both SHAL buses
+    already raise on non-2xx; the driver still checks, so a looser bus cannot
+    hand it an error page as an empty calendar."""
+    bus = hal.get_device("cal_personal").bus
+    monkeypatch.setattr(bus, "exchange", lambda addr, msg: bus_reply)
+
+    reply = hal.call_tool("cal_personal__read_events",
+                          {"date_from": "2026-08-31", "date_to": "2026-08-31"})
+
+    assert reply["ok"] is False
+    assert said in str(reply["error"])
+
+
 # ---- normalization is pure --------------------------------------------------
 
 def test_normalize_reads_local_wall_clock_without_a_tz_database():
