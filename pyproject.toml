@@ -7,7 +7,7 @@ authors = [{ name = "determlab", email = "hemipaska@gmail.com" }]
 readme = "README.md"
 
 dependencies = [
-    "pyshal>=0.2.1",
+    "pyshal>=0.3.0",
     "pyyaml>=6.0",
     # bricks is alpha and not on PyPI — install it from a PINNED commit
     # alongside this package (spec §8 step 5):
