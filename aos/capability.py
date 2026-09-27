@@ -12,13 +12,14 @@ step, a run-record entry, and a SHAL txn all say the same word.
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import date, datetime, timezone
-from typing import Any
+from types import MappingProxyType
+from typing import Any, Final
 
 from bricks.core.models import BrickMeta
 
-from aos.errors import CapabilityCallError
+from aos.errors import CapabilityCallError, GrantDenied, ManifestError
 from aos.grants import require_grant
 from aos.record import RunRecord
 from aos.store import Store
@@ -27,6 +28,16 @@ from aos.store import Store
 # side effects and gates {actuator, config} (CLAUDE.md correction 4). Mapping
 # three into four loses the distinction that decides whether the approver fires.
 SIDE_EFFECTS = frozenset({"none", "write", "actuator", "config"})
+
+#: which side effects a grant's ``mode`` permits (D14). This is the ONE place
+#: the mapping lives; the door and the approver both read it. ``actuate`` and
+#: ``configure`` are deliberately not a ladder: neither implies the other.
+MODE_PERMITS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
+    "read_only": frozenset({"none"}),
+    "read_write": frozenset({"none", "write"}),
+    "actuate": frozenset({"none", "write", "actuator"}),
+    "configure": frozenset({"none", "write", "config"}),
+})
 
 
 def tool_name(capability_id: str) -> str:
@@ -58,10 +69,14 @@ def make_capability_brick(
         raise CapabilityCallError(
             f"{capability_id}: side_effect {side_effect!r} is not one of "
             f"{sorted(SIDE_EFFECTS)} — capabilities use SHAL's vocabulary")
+    # denial by construction (D8, D14): a grant whose mode does not permit this
+    # side effect never becomes a brick, so the run is denied before any step
+    require_mode(grant, capability_id, side_effect, store)
 
     def brick(**kwargs: Any) -> dict[str, Any]:
-        # 1. grant — again, at call time
-        require_grant(store, record.processor, capability_id, record.run_date)
+        # 1. grant — again, at call time, mode included
+        live = require_grant(store, record.processor, capability_id, record.run_date)
+        require_mode(live, capability_id, side_effect, store)
         # 2. driver — through SHAL, in-process
         with _TxnCapture() as captured:
             reply = hal.call_tool(name, kwargs)
@@ -88,6 +103,26 @@ def make_capability_brick(
                         or f"AOS capability {capability_id} (granted)."),
     )
     return brick, meta
+
+
+def require_mode(grant: dict[str, Any], capability_id: str, side_effect: str,
+                 store: Store) -> None:
+    """Raise unless the grant's ``mode`` permits *side_effect* (D14).
+
+    An unknown mode is a malformed grant file (``ManifestError`` → ``failed``);
+    a known mode that does not permit the effect is a denial (``GrantDenied``).
+    """
+    grant_id = grant.get("grant", "?")
+    mode = str(grant.get("mode", ""))
+    if mode not in MODE_PERMITS:
+        raise ManifestError(
+            f"grant {grant_id} in {store.grants}: mode {mode!r} is not one of "
+            f"{sorted(MODE_PERMITS)}")
+    if side_effect not in MODE_PERMITS[mode]:
+        raise GrantDenied(
+            f"grant {grant_id} has mode {mode}, which does not permit "
+            f"{capability_id} (side_effect {side_effect}); {mode} permits "
+            f"{sorted(MODE_PERMITS[mode])}")
 
 
 class _TxnCapture(logging.Handler):

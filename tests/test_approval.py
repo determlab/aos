@@ -9,12 +9,13 @@ from datetime import date
 
 import pytest
 import shal
+import yaml
 from shal.approval import ApprovalRequest
 from shal.driver import Driver, op
 from shal.errors import ApprovalDenied
 from shal.transport import MessageTransport
 
-from aos.approval import ProcessorApprover, install
+from aos.approval import GATED_EFFECTS, ProcessorApprover, install
 from aos.record import RunRecord
 
 RUN_DATE = date(2026, 8, 31)
@@ -134,3 +135,71 @@ def test_a_denied_actuation_raises_on_the_raw_path_too():
     with (shal.load(SIREN_LAB) as hal, install(record, {}),
           pytest.raises(ApprovalDenied)):
         hal.get_device("siren").sound()
+
+
+# ---- writes are gated too (D15), and there is one mode table (D14) ----------
+
+class _Printer(Driver):
+    """A test-local driver with a plain `write` op, which SHAL alone never gates."""
+
+    compatible = "test,printer"
+    kind = MessageTransport
+
+    @op("Print a page.", side_effect="write")
+    def print_page(self) -> str:
+        return "printed"
+
+
+PRINTER_LAB = {
+    "shal_version": 1,
+    "root": {"bus": {"driver": "shal,sim-msg", "address": "sim", "children": {
+        "printer": {"id": "printer", "driver": "test,printer", "address": "p1"}}}},
+}
+
+
+def test_install_seats_the_gated_set_and_the_approver_together(record):
+    gated_before, approver_before = shal.get_gated_effects(), shal.get_approver()
+
+    with install(record, {}):
+        assert shal.get_gated_effects() == GATED_EFFECTS
+        assert isinstance(shal.get_approver(), ProcessorApprover)
+
+    assert shal.get_gated_effects() == gated_before
+    assert shal.get_approver() is approver_before
+
+
+def test_a_read_write_grant_on_a_write_capability_is_asked(tmp_path):
+    """Through the single door: the brick is built (mode permits write), and the
+    write op reaches the approver instead of running unasked."""
+    from aos.capability import make_capability_brick
+    from aos.store import Store
+
+    shal.registry.register(_Printer)
+    grant = {"grant": "grant-009", "processor": "p", "principal": "user:me",
+             "capability": "printer.print_page", "mode": "read_write"}
+    (tmp_path / "capabilities").mkdir()
+    (tmp_path / "capabilities" / "printer.print_page.yaml").write_text(
+        "capability: printer.print_page\nside_effect: write\n", encoding="utf-8")
+    (tmp_path / "grants").mkdir()
+    (tmp_path / "grants" / "grant-009.yaml").write_text(
+        yaml.safe_dump(grant), encoding="utf-8")
+    store = Store(root=tmp_path)
+    record = RunRecord.new("p", RUN_DATE)
+
+    with shal.load(PRINTER_LAB) as hal, install(record, {"printer.print_page": grant}):
+        brick, _ = make_capability_brick(hal, "printer.print_page", grant, record, store)
+        brick()
+
+    assert [c["result"] for c in record.calls] == ["approved", "ok"]
+
+
+def test_the_mode_table_and_shal_agree_on_side_effects():
+    """Every effect a mode permits is a SHAL effect, and every SHAL effect is
+    permitted by some mode — a fifth SHAL value cannot drift in unseen."""
+    from shal.driver import _SIDE_EFFECTS
+
+    from aos.capability import MODE_PERMITS, SIDE_EFFECTS
+
+    permitted = frozenset().union(*MODE_PERMITS.values())
+    assert permitted <= _SIDE_EFFECTS
+    assert permitted == _SIDE_EFFECTS == SIDE_EFFECTS

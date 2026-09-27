@@ -29,6 +29,9 @@ dev = [
     "mypy>=1.8",
     "types-PyYAML",
     "bricks @ git+https://github.com/determlab/bricks@5c3a5bd401dffcdf50b04a9655cb41fda16f6805",
+    # pyshal 0.3.0 release cut (shal#114, `shal.gated_effects`), pinned by commit
+    # until 0.3.0 is on PyPI; then drop this and raise the floor in [dependencies].
+    "pyshal @ git+https://github.com/determlab/shal@96ed7ac4e4f7cb8e27c88e4e794003ffac2c371c",
 ]
 
 [project.scripts]

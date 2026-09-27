@@ -173,6 +173,48 @@ def test_run_id_and_clock_are_injectable(estate: Store, run_id: str):
     assert on_disk["started"] == "2026-08-31T07:00:00Z"
 
 
+# ---- mode is enforced at the door (D14) -------------------------------------
+
+def test_a_write_capability_under_a_read_only_grant_is_denied(estate: Store):
+    """Before D14 this ran: the grant matched and `mode` was never read. Now the
+    brick is refused at construction, so the run is denied before any step."""
+    path = estate.capabilities / f"{CAPABILITY}.yaml"
+    path.write_text(path.read_text(encoding="utf-8").replace(
+        "side_effect: none", "side_effect: write"), encoding="utf-8")
+
+    record = run(estate)
+
+    assert record.status == "denied"
+    on_disk = record_on_disk(estate, record.run)
+    assert on_disk["status"] == "denied"
+    assert "grant-001" in on_disk["error"] and "read_only" in on_disk["error"]
+    assert record.calls == [], "nothing may execute"
+    assert record.output_ref is None
+
+
+def test_an_unknown_mode_is_rejected_with_the_file_and_valid_values(estate: Store):
+    _patch_grant(estate, mode="admin")
+
+    record = run(estate)
+
+    assert record.status == "failed"
+    assert record_on_disk(estate, record.run)["status"] == "failed"
+    assert "grant-001" in record.error and str(estate.grants) in record.error
+    for mode in ("read_only", "read_write", "actuate", "configure"):
+        assert mode in record.error
+
+
+def test_every_shipped_grant_has_a_valid_mode_that_permits_its_capability():
+    """Migration check: the repo's own grants already satisfy D14."""
+    from aos.capability import MODE_PERMITS
+
+    store = Store()
+    for grant in store.all_grants():
+        contract = store.capability(grant["capability"])
+        assert grant["mode"] in MODE_PERMITS, grant
+        assert contract.get("side_effect", "none") in MODE_PERMITS[grant["mode"]]
+
+
 def _patch_grant(estate: Store, **changes) -> None:
     path = estate.grants / "grant-001.yaml"
     doc = yaml.safe_load(path.read_text(encoding="utf-8"))
