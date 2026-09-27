@@ -19,6 +19,12 @@ recorded below.
 ## [Unreleased]
 
 ### Fixed
+- **The calendar driver broke on pyshal 0.3.0.** A request envelope's reply is
+  now `{status, headers, json | text}` (shal#104), not the bare body.
+  `determlab,google-calendar` reads the events from `reply["json"]` and refuses
+  a reply with no 2xx `status` or no JSON `items` with a `HopError`. The pyshal
+  pin is raised to `>=0.3.0` so an install cannot pair this driver with the old
+  reply shape. (#13)
 - **An installed brick pack was a granted capability.** The kernel called
   `bricks.build_default_registry()`, which loads *every* `bricks.packs` entry
   point — so `pip install <io-pack>` would have added world-touching bricks to
