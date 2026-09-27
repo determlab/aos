@@ -58,8 +58,9 @@ One CLI, `aos`. No MCP server. **No command takes
 | `aos grants` | list grant ids | one id per line |
 | `aos record <run-id>` | print one run record | the record's YAML |
 
-Global flag: `--root DIR` points at another estate (a directory holding
-`processors/ grants/ capabilities/ blueprints/`).
+Global flag, before the command: `aos --root DIR <command>`. DIR holds `processors/
+grants/ capabilities/ blueprints/` and the lab file (e.g. `lab.sim.yaml`, resolved
+from DIR); `runs/` and `outputs/` are written under it.
 
 Exit codes for `aos run`: `0` success, `2` denied (a required grant is missing,
 expired or revoked), `1` failed. Branch on the exit code, then read the record.
